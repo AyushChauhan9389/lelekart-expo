@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "lelekart-expo",
-    "slug": "lelekart-expo",
+    "name": "lelekart",
+    "slug": "lelekart",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -16,12 +16,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.clusterider.lelekartexpo"
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "package": "com.lelekart.app"
     },
     "plugins": [
       "expo-router",
@@ -43,7 +38,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "408fef95-ff1f-45f8-9494-93f04b49571c"
+        "projectId": "3b38603f-c2d3-40f7-bfd3-e5433755aaf2"
       }
     }
   }
