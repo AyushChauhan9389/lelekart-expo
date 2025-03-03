@@ -78,6 +78,8 @@ export default function Index() {
           allowsBackForwardNavigationGestures={false}
           pullToRefreshEnabled={false}
           thirdPartyCookiesEnabled={false}
+          cacheEnabled={true}
+          cacheMode="LOAD_CACHE_ELSE_NETWORK"
         />
         {isLoading && (
           <View style={styles.loaderContainer}>
