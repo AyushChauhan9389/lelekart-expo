@@ -27,19 +27,19 @@ export default function Index() {
       Animated.sequence([
         Animated.timing(progressAnim, {
           toValue: 0.7,
-          duration: 800,
+          duration: 400,
           useNativeDriver: false,
         }),
         Animated.timing(progressAnim, {
           toValue: 0.9,
-          duration: 500,
+          duration: 400,
           useNativeDriver: false,
         })
       ]).start();
     } else {
       Animated.timing(progressAnim, {
         toValue: 1,
-        duration: 200,
+        duration: 100,
         useNativeDriver: false,
       }).start();
     }
