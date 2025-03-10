@@ -1,15 +1,19 @@
-import { ActivityIndicator, Animated, StyleSheet, Text, View, BackHandler } from "react-native";
+import { Animated, StyleSheet, View, BackHandler, Alert, RefreshControl, ScrollView } from "react-native";
 import { WebView, WebViewNavigation } from "react-native-webview";
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useCallback, useLayoutEffect } from "react";
 import { SvgXml } from 'react-native-svg';
 import LeleKartSvg from "@/components/Logo";
 import { SafeAreaView } from "react-native-safe-area-context";
+import OfflineFallback from "@/components/OfflineFallback";
+import * as Network from 'expo-network';
 
 
 
-export default function Index() {
+export default function App() {
   const webViewRef = useRef<WebView>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isOnline, setIsOnline] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
   const progressAnim = useRef(new Animated.Value(0)).current;
 
@@ -28,11 +32,49 @@ export default function Index() {
         webViewRef.current.goBack();
         return true;
       }
-      return false;
+      Alert.alert(
+        "Exit App",
+        "Are you sure you want to exit?",
+        [
+          {
+            text: "Cancel",
+            onPress: () => undefined,
+            style: "cancel"
+          },
+          {
+            text: "OK",
+            onPress: () => BackHandler.exitApp()
+          }
+        ]
+      );
+      return true;
     });
 
     return () => backHandler.remove();
   }, [canGoBack]);
+
+  useEffect(() => {
+    checkNetworkStatus();
+  }, []);
+
+  const checkNetworkStatus = async () => {
+    try {
+      const networkState = await Network.getNetworkStateAsync();
+      setIsOnline(networkState.isConnected!);
+    } catch (error) {
+      console.error('Error checking network status:', error);
+      setIsOnline(false);
+    }
+  };
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await checkNetworkStatus();
+    if (webViewRef.current) {
+      webViewRef.current.reload();
+    }
+    setRefreshing(false);
+  }, []);
 
   useEffect(() => {
     if (isLoading) {
@@ -58,6 +100,10 @@ export default function Index() {
     }
   }, [isLoading]);
 
+  if (!isOnline) {
+    return <OfflineFallback onRetry={checkNetworkStatus} />;
+  }
+
   const handleNavigationStateChange = (navState: WebViewNavigation) => {
     if (!isUrlAllowed(navState.url)) {
       webViewRef.current?.stopLoading();
@@ -78,23 +124,34 @@ export default function Index() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.webviewContainer}>
-        <WebView
-          ref={webViewRef}
-          source={{ uri: 'https://lelekart.com' }}
-          style={styles.webview}
-          onLoadStart={() => setIsLoading(true)}
-          onLoadEnd={() => setIsLoading(false)}
-          onNavigationStateChange={handleNavigationStateChange}
-          onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          bounces={false}
-          allowsBackForwardNavigationGestures={false}
-          pullToRefreshEnabled={false}
-          thirdPartyCookiesEnabled={false}
-          cacheEnabled={true}
-          cacheMode="LOAD_DEFAULT"
-        />
+        <ScrollView
+          contentContainerStyle={styles.scrollView}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              colors={['#FF4646']}
+              tintColor="#FF4646"
+            />
+          }
+        >
+          <WebView
+            ref={webViewRef}
+            source={{ uri: 'https://lelekart.com' }}
+            style={styles.webview}
+            onLoadStart={() => setIsLoading(true)}
+            onLoadEnd={() => setIsLoading(false)}
+            onNavigationStateChange={handleNavigationStateChange}
+            onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            bounces={true}
+            allowsBackForwardNavigationGestures={true}
+            thirdPartyCookiesEnabled={false}
+            cacheEnabled={true}
+            cacheMode="LOAD_DEFAULT"
+          />
+        </ScrollView>
         {isLoading && (
           <View style={styles.loaderContainer}>
             <LeleKartSvg />
@@ -109,6 +166,9 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
