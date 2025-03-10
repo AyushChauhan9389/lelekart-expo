@@ -1,6 +1,6 @@
-import { ActivityIndicator, Animated, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Animated, StyleSheet, Text, View, BackHandler } from "react-native";
 import { WebView, WebViewNavigation } from "react-native-webview";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { SvgXml } from 'react-native-svg';
 import LeleKartSvg from "@/components/Logo";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -10,6 +10,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function Index() {
   const webViewRef = useRef<WebView>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [canGoBack, setCanGoBack] = useState(false);
   const progressAnim = useRef(new Animated.Value(0)).current;
 
   const isUrlAllowed = (url: string) => {
@@ -20,6 +21,18 @@ export default function Index() {
       return false;
     }
   };
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (webViewRef.current && canGoBack) {
+        webViewRef.current.goBack();
+        return true;
+      }
+      return false;
+    });
+
+    return () => backHandler.remove();
+  }, [canGoBack]);
 
   useEffect(() => {
     if (isLoading) {
@@ -50,6 +63,7 @@ export default function Index() {
       webViewRef.current?.stopLoading();
       webViewRef.current?.injectJavaScript('window.location.href = "https://lelekart.com"');
     }
+    setCanGoBack(navState.canGoBack);
   };
 
   const handleShouldStartLoadWithRequest = (request: WebViewNavigation) => {
@@ -79,7 +93,7 @@ export default function Index() {
           pullToRefreshEnabled={false}
           thirdPartyCookiesEnabled={false}
           cacheEnabled={true}
-          cacheMode="LOAD_CACHE_ELSE_NETWORK"
+          cacheMode="LOAD_DEFAULT"
         />
         {isLoading && (
           <View style={styles.loaderContainer}>
